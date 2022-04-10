@@ -2,8 +2,8 @@ import mongoose from "mongoose"
 
 const { MONGO_URL } = process.env;
 
-export function connect(){
-    mongoose.connect(MONGO_URL,{
+export default function connect(url){
+    mongoose.connect(url,{
         useNewUrlParser: true,
         useUnifiedTopology: true,
     }).then(() => {

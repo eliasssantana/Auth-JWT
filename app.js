@@ -1,11 +1,13 @@
-require("dotenv").config()
-import { connect } from "./config/database.js"
-import UserModel from "./models/user.js"
+import dotenv from "dotenv"
+import connect from "./config/database.js"
+import UserModel from "./model/user.js"
 import express, { json } from "express"
-import { hash, compare } from "bcryptjs"
-import { sign } from "jsonwebtoken"
+import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
 import auth from "./middleware/auth"
-connect()
+dotenv.config()
+const { MONGO_URL } = process.env;
+connect(MONGO_URL)
 
 const app = express()
 
@@ -25,7 +27,7 @@ app.post("/register", async(req, res) =>{
             return res.status(409).send("User Already Exist. Please Login")
         }
 
-        encryptedPassword = await hash(password, 10)
+        encryptedPassword = await bcrypt.hash(password, 10)
 
         const user = await UserModel.create({
             first_name,
@@ -34,7 +36,7 @@ app.post("/register", async(req, res) =>{
             password: encryptedPassword,
         })
 
-        const token = sign(
+        const token = jwt.sign(
             {user_id: user._id, email},
             process.env.TOKEN_KEY,
             {
@@ -59,8 +61,8 @@ app.post("/login", async(req, res) =>{
 
         const user = await UserModel.findOne({email})
 
-        if(user && (await compare(password, user.password))){
-            const token = sign(
+        if(user && (await bcrypt.compare(password, user.password))){
+            const token = jwt.sign(
                 {user_id: user._id, email},
                 process.env.TOKEN_KEY,
                 {
